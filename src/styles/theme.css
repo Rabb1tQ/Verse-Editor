@@ -1,0 +1,658 @@
+/* IDEA 风格主题变量 */
+:root {
+  /* 浅色主题 - 参考 IntelliJ IDEA Light */
+  --verse-bg-primary: #f7f7f7;
+  --verse-bg-secondary: #ffffff;
+  --verse-bg-tertiary: #f2f2f2;
+  --verse-bg-hover: #e8f4fd;
+  --verse-bg-selected: #d4e5f7;
+  --verse-border-color: #c9c9c9;
+  --verse-border-light: #e6e6e6;
+  --verse-text-primary: #000000;
+  --verse-text-secondary: #616161;
+  --verse-text-tertiary: #999999;
+  --verse-accent: #4a90e2;
+  --verse-accent-hover: #3d7bc6;
+  --verse-accent-pressed: #2e5c94;
+  --verse-danger: #db5860;
+  --verse-success: #59a869;
+  --verse-warning: #dba05a;
+  
+  /* 现代化阴影 - 更柔和 */
+  --verse-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --verse-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.06);
+  --verse-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.08), 0 4px 6px rgba(0, 0, 0, 0.06);
+  --verse-shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1), 0 10px 10px rgba(0, 0, 0, 0.04);
+  
+  /* 现代化圆角 - 参考 Windows 11、macOS 和现代桌面应用 */
+  --verse-radius-xs: 2px;   /* 小按钮、图标 */
+  --verse-radius-sm: 4px;   /* 输入框、小卡片 */
+  --verse-radius-md: 6px;   /* 按钮、标签 */
+  --verse-radius-lg: 8px;   /* 面板、卡片 */
+  --verse-radius-xl: 10px;  /* 大容器 */
+  --verse-radius-xxl: 12px; /* 特殊容器 */
+  
+  /* 间距 */
+  --verse-spacing-xs: 4px;
+  --verse-spacing-sm: 8px;
+  --verse-spacing-md: 16px;
+  --verse-spacing-lg: 24px;
+  --verse-spacing-xl: 32px;
+  
+  /* 层级 */
+  --verse-z-dropdown: 1000;
+  --verse-z-modal: 2000;
+  --verse-z-tooltip: 3000;
+}
+
+/* 深色主题 - 参考 VS Code 和现代桌面应用 */
+.dark {
+  --verse-bg-primary: #1e1e1e;
+  --verse-bg-secondary: #252526;
+  --verse-bg-tertiary: #2d2d30;
+  --verse-bg-hover: #2a2d2e;
+  --verse-bg-selected: #094771;
+  --verse-border-color: #3e3e42;
+  --verse-border-light: #333333;
+  --verse-text-primary: #cccccc;
+  --verse-text-secondary: #9d9d9d;
+  --verse-text-tertiary: #6d6d6d;
+  --verse-accent: #007acc;
+  --verse-accent-hover: #1177bb;
+  --verse-accent-pressed: #005a9e;
+  --verse-danger: #f14c4c;
+  --verse-success: #89d185;
+  --verse-warning: #ffcc02;
+}
+
+/* 全局样式重置 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  line-height: 1.5;
+  color: var(--verse-text-primary);
+  background-color: var(--verse-bg-primary);
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+#app {
+  height: 100%;
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--verse-bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--verse-border-color);
+  border-radius: var(--verse-radius-sm);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--verse-text-tertiary);
+}
+
+/* 选择文本样式 */
+::selection {
+  background: var(--verse-accent);
+  color: white;
+}
+
+/* 输入框样式 */
+input, textarea {
+  font-family: inherit;
+}
+
+/* 按钮基础样式 */
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* 链接样式 */
+a {
+  color: var(--verse-accent);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--verse-accent-hover);
+  text-decoration: underline;
+}
+
+/* 代码样式 */
+code {
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+  background: var(--verse-bg-tertiary);
+  padding: 2px 4px;
+  border-radius: var(--verse-radius-sm);
+  font-size: 0.9em;
+}
+
+/* 预格式化文本 */
+pre {
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+  background: var(--verse-bg-tertiary);
+  padding: var(--verse-spacing-md);
+  border-radius: var(--verse-radius-md);
+  overflow-x: auto;
+}
+
+/* 表格样式 */
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+th, td {
+  border: 1px solid var(--verse-border-color);
+  padding: var(--verse-spacing-sm) var(--verse-spacing-md);
+  text-align: left;
+}
+
+th {
+  background: var(--verse-bg-secondary);
+  font-weight: 600;
+}
+
+/* 引用样式 */
+blockquote {
+  border-left: 4px solid var(--verse-accent);
+  padding-left: var(--verse-spacing-md);
+  margin: var(--verse-spacing-md) 0;
+  color: var(--verse-text-secondary);
+  font-style: italic;
+}
+
+/* 分割线 */
+hr {
+  border: none;
+  height: 1px;
+  background: var(--verse-border-color);
+  margin: var(--verse-spacing-lg) 0;
+}
+
+/* 工具提示 */
+[title] {
+  cursor: help;
+}
+
+/* 禁用状态 */
+.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* 加载状态 */
+.loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* 动画 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.slide-enter-active,
+.slide-leave-active {
+  transition: transform 0.3s ease;
+}
+
+.slide-enter-from {
+  transform: translateX(-100%);
+}
+
+.slide-leave-to {
+  transform: translateX(-100%);
+}
+
+/* 响应式断点 */
+@media (max-width: 768px) {
+  :root {
+    --verse-spacing-md: 12px;
+    --verse-spacing-lg: 18px;
+    --verse-spacing-xl: 24px;
+  }
+}
+
+/* 高对比度模式支持 */
+@media (prefers-contrast: high) {
+  :root {
+    --verse-border-color: #000000;
+    --verse-text-secondary: #000000;
+  }
+  
+  .dark {
+    --verse-border-color: #ffffff;
+    --verse-text-secondary: #ffffff;
+  }
+}
+
+/* 减少动画偏好 */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Element Plus 组件主题覆盖 */
+.el-button {
+  --el-button-bg-color: var(--verse-bg-secondary);
+  --el-button-border-color: var(--verse-border-color);
+  --el-button-text-color: var(--verse-text-primary);
+  --el-button-hover-bg-color: var(--verse-bg-tertiary);
+  --el-button-hover-border-color: var(--verse-accent);
+  --el-button-hover-text-color: var(--verse-accent);
+  border-radius: var(--verse-radius-sm) !important;
+  transition: all 0.2s ease !important;
+}
+
+/* Element Plus Tabs 组件主题覆盖 */
+.el-tabs {
+  --el-tabs-header-color: var(--verse-text-secondary);
+}
+
+.el-tabs__header {
+  background-color: var(--verse-bg-tertiary) !important;
+  border-bottom: 1px solid var(--verse-border-light) !important;
+  margin: 0 !important;
+}
+
+.el-tabs__nav {
+  background-color: transparent !important;
+}
+
+.el-tabs__item {
+  background-color: transparent !important;
+  border: none !important;
+  color: var(--verse-text-secondary) !important;
+  padding: 8px 16px !important;
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  transition: all 0.15s ease !important;
+  border-radius: var(--verse-radius-sm) !important;
+  margin: 1px !important;
+}
+
+.el-tabs__item:hover {
+  background-color: var(--verse-bg-hover) !important;
+  color: var(--verse-text-primary) !important;
+}
+
+.el-tabs__item.is-active {
+  background-color: var(--verse-bg-secondary) !important;
+  color: var(--verse-accent) !important;
+  font-weight: 500 !important;
+}
+
+.el-tabs__active-bar {
+  background-color: var(--verse-accent) !important;
+  height: 2px !important;
+}
+
+.el-tabs__content {
+  background-color: var(--verse-bg-secondary) !important;
+}
+
+.el-tab-pane {
+  background-color: var(--verse-bg-secondary) !important;
+}
+
+/* Element Plus Drawer 组件主题覆盖 */
+.el-drawer {
+  --el-drawer-bg-color: var(--verse-bg-secondary);
+  --el-drawer-padding-primary: var(--verse-spacing-lg);
+}
+
+.el-drawer__header {
+  background-color: var(--verse-bg-tertiary) !important;
+  border-bottom: 1px solid var(--verse-border-light) !important;
+  color: var(--verse-text-primary) !important;
+}
+
+.el-drawer__body {
+  background-color: var(--verse-bg-secondary) !important;
+  color: var(--verse-text-primary) !important;
+}
+
+/* Vditor 编辑器主题覆盖 */
+.vditor {
+  background-color: var(--verse-bg-secondary) !important;
+  border: 1px solid var(--verse-border-light) !important;
+  color: var(--verse-text-primary) !important;
+}
+
+/* 深色主题下的编辑器样式 */
+.vditor--dark {
+  --vditor-color: var(--verse-text-primary) !important;
+  --vditor-background-color: var(--verse-bg-secondary) !important;
+}
+
+.vditor--dark .vditor-reset {
+  color: var(--verse-text-primary) !important;
+}
+
+.vditor--dark .vditor-reset p,
+.vditor--dark .vditor-reset div,
+.vditor--dark .vditor-reset span,
+.vditor--dark .vditor-reset li,
+.vditor--dark .vditor-reset td,
+.vditor--dark .vditor-reset th {
+  color: var(--verse-text-primary) !important;
+}
+
+/* 浅色主题下的编辑器样式 */
+.vditor--light {
+  --vditor-color: var(--verse-text-primary) !important;
+  --vditor-background-color: var(--verse-bg-secondary) !important;
+}
+
+.vditor--light .vditor-reset {
+  color: var(--verse-text-primary) !important;
+}
+
+.vditor--light .vditor-reset p,
+.vditor--light .vditor-reset div,
+.vditor--light .vditor-reset span,
+.vditor--light .vditor-reset li,
+.vditor--light .vditor-reset td,
+.vditor--light .vditor-reset th {
+  color: var(--verse-text-primary) !important;
+}
+
+.vditor-toolbar {
+  background-color: var(--verse-bg-tertiary) !important;
+  border-bottom: 1px solid var(--verse-border-light) !important;
+}
+
+.vditor-toolbar__item {
+  color: var(--verse-text-secondary) !important;
+}
+
+.vditor-toolbar__item:hover {
+  background-color: var(--verse-bg-hover) !important;
+  color: var(--verse-text-primary) !important;
+}
+
+.vditor-toolbar__item--current {
+  background-color: var(--verse-bg-selected) !important;
+  color: var(--verse-accent) !important;
+}
+
+.vditor-ir {
+  background-color: var(--verse-bg-secondary) !important;
+  color: var(--verse-text-primary) !important;
+}
+
+.vditor-ir pre.vditor-ir__marker {
+  color: var(--verse-text-tertiary) !important;
+}
+
+.vditor-ir pre.vditor-ir__marker--heading {
+  color: var(--verse-accent) !important;
+}
+
+.vditor-ir__preview {
+  background-color: var(--verse-bg-secondary) !important;
+  color: var(--verse-text-primary) !important;
+}
+
+.vditor-sv {
+  background-color: var(--verse-bg-secondary) !important;
+  color: var(--verse-text-primary) !important;
+}
+
+.vditor-sv .vditor-sv__marker {
+  color: var(--verse-text-tertiary) !important;
+}
+
+.vditor-wysiwyg {
+  background-color: var(--verse-bg-secondary) !important;
+  color: var(--verse-text-primary) !important;
+}
+
+/* IR模式和SV模式的编辑区域 */
+.vditor-ir .vditor-reset,
+.vditor-sv .vditor-reset,
+.vditor-wysiwyg .vditor-reset {
+  color: var(--verse-text-primary) !important;
+  background-color: var(--verse-bg-secondary) !important;
+}
+
+/* IR模式和WYSIWYG模式中的HTML标签支持 */
+.vditor-ir font[color="red"],
+.vditor-ir font[color="#ff0000"],
+.vditor-ir font[color="#f00"],
+.vditor-wysiwyg font[color="red"],
+.vditor-wysiwyg font[color="#ff0000"],
+.vditor-wysiwyg font[color="#f00"] {
+  color: #ff4757 !important;
+}
+
+.vditor-ir font[color="blue"],
+.vditor-ir font[color="#0000ff"],
+.vditor-ir font[color="#00f"],
+.vditor-wysiwyg font[color="blue"],
+.vditor-wysiwyg font[color="#0000ff"],
+.vditor-wysiwyg font[color="#00f"] {
+  color: #3742fa !important;
+}
+
+.vditor-ir font[color="green"],
+.vditor-ir font[color="#008000"],
+.vditor-wysiwyg font[color="green"],
+.vditor-wysiwyg font[color="#008000"] {
+  color: #2ed573 !important;
+}
+
+.vditor-ir font[color="yellow"],
+.vditor-ir font[color="#ffff00"],
+.vditor-ir font[color="#ff0"],
+.vditor-wysiwyg font[color="yellow"],
+.vditor-wysiwyg font[color="#ffff00"],
+.vditor-wysiwyg font[color="#ff0"] {
+  color: #ffa502 !important;
+}
+
+.vditor-ir font[color="purple"],
+.vditor-ir font[color="#800080"],
+.vditor-wysiwyg font[color="purple"],
+.vditor-wysiwyg font[color="#800080"] {
+  color: #a55eea !important;
+}
+
+.vditor-ir font[color="orange"],
+.vditor-ir font[color="#ffa500"],
+.vditor-wysiwyg font[color="orange"],
+.vditor-wysiwyg font[color="#ffa500"] {
+  color: #ff6348 !important;
+}
+
+.vditor-counter {
+  background-color: var(--verse-bg-tertiary) !important;
+  color: var(--verse-text-secondary) !important;
+  border-top: 1px solid var(--verse-border-light) !important;
+}
+
+.vditor-outline {
+  background-color: var(--verse-bg-secondary) !important;
+  border: 1px solid var(--verse-border-light) !important;
+}
+
+.vditor-outline__title {
+  background-color: var(--verse-bg-tertiary) !important;
+  color: var(--verse-text-primary) !important;
+  border-bottom: 1px solid var(--verse-border-light) !important;
+}
+
+.vditor-outline__item {
+  color: var(--verse-text-secondary) !important;
+}
+
+.vditor-outline__item:hover {
+  background-color: var(--verse-bg-hover) !important;
+  color: var(--verse-text-primary) !important;
+}
+
+.vditor-outline__item--current {
+  background-color: var(--verse-bg-selected) !important;
+  color: var(--verse-accent) !important;
+}
+
+/* Vditor 内容区域样式 */
+.vditor-content {
+  background-color: var(--verse-bg-secondary) !important;
+  color: var(--verse-text-primary) !important;
+}
+
+.vditor-content h1,
+.vditor-content h2,
+.vditor-content h3,
+.vditor-content h4,
+.vditor-content h5,
+.vditor-content h6 {
+  color: var(--verse-text-primary) !important;
+  border-bottom-color: var(--verse-border-light) !important;
+}
+
+.vditor-content blockquote {
+  background-color: var(--verse-bg-tertiary) !important;
+  border-left-color: var(--verse-accent) !important;
+  color: var(--verse-text-secondary) !important;
+}
+
+.vditor-content code {
+  background-color: var(--verse-bg-tertiary) !important;
+  color: var(--verse-accent) !important;
+}
+
+.vditor-content pre {
+  background-color: var(--verse-bg-tertiary) !important;
+}
+
+.vditor-content pre code {
+  color: var(--verse-text-primary) !important;
+}
+
+.vditor-content table {
+  border-color: var(--verse-border-light) !important;
+}
+
+.vditor-content th,
+.vditor-content td {
+  border-color: var(--verse-border-light) !important;
+}
+
+.vditor-content th {
+  background-color: var(--verse-bg-tertiary) !important;
+  color: var(--verse-text-primary) !important;
+}
+
+.vditor-content hr {
+  border-color: var(--verse-border-light) !important;
+}
+
+/* HTML标签支持 - font标签 */
+.vditor-content font[color] {
+  color: inherit !important;
+}
+
+.vditor-content font[color="red"],
+.vditor-content font[color="#ff0000"],
+.vditor-content font[color="#f00"],
+.vditor-content font[color="rgb(255,0,0)"] {
+  color: #ff4757 !important;
+}
+
+.vditor-content font[color="blue"],
+.vditor-content font[color="#0000ff"],
+.vditor-content font[color="#00f"],
+.vditor-content font[color="rgb(0,0,255)"] {
+  color: #3742fa !important;
+}
+
+.vditor-content font[color="green"],
+.vditor-content font[color="#008000"],
+.vditor-content font[color="rgb(0,128,0)"] {
+  color: #2ed573 !important;
+}
+
+.vditor-content font[color="yellow"],
+.vditor-content font[color="#ffff00"],
+.vditor-content font[color="#ff0"],
+.vditor-content font[color="rgb(255,255,0)"] {
+  color: #ffa502 !important;
+}
+
+.vditor-content font[color="purple"],
+.vditor-content font[color="#800080"],
+.vditor-content font[color="rgb(128,0,128)"] {
+  color: #a55eea !important;
+}
+
+.vditor-content font[color="orange"],
+.vditor-content font[color="#ffa500"],
+.vditor-content font[color="rgb(255,165,0)"] {
+  color: #ff6348 !important;
+}
+
+/* 支持更多HTML样式标签 */
+.vditor-content u {
+  text-decoration: underline !important;
+}
+
+.vditor-content s,
+.vditor-content strike {
+  text-decoration: line-through !important;
+}
+
+.vditor-content sub {
+  font-size: 0.8em !important;
+  vertical-align: sub !important;
+}
+
+.vditor-content sup {
+  font-size: 0.8em !important;
+  vertical-align: super !important;
+}
+
+/* Vditor 滚动条样式 */
+.vditor ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.vditor ::-webkit-scrollbar-track {
+  background: var(--verse-bg-tertiary);
+}
+
+.vditor ::-webkit-scrollbar-thumb {
+  background: var(--verse-border-color);
+  border-radius: 4px;
+}
+
+.vditor ::-webkit-scrollbar-thumb:hover {
+  background: var(--verse-text-tertiary);
+}
