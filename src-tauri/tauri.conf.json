@@ -36,6 +36,18 @@
     "targets": "all",
     "icon": [
       "icons/icon.ico"
+    ],
+    "fileAssociations": [
+      {
+        "ext": ["md"],
+        "name": "Markdown Document",
+        "description": "Markdown text document"
+      },
+      {
+        "ext": ["markdown"],
+        "name": "Markdown Document", 
+        "description": "Markdown text document"
+      }
     ]
   }
 }

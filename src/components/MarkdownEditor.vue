@@ -175,26 +175,37 @@ const processImageSrc = async (img) => {
           fullPath = originalSrc
         } else {
           // 相对路径，相对于当前文件
-          const currentDir = props.currentFilePath.substring(0, props.currentFilePath.lastIndexOf('/'))
+          // 标准化路径分隔符，统一使用正斜杠
+          const normalizedFilePath = props.currentFilePath.replace(/\\/g, '/')
+          const lastSlashIndex = Math.max(normalizedFilePath.lastIndexOf('/'), normalizedFilePath.lastIndexOf('\\'))
+          const currentDir = normalizedFilePath.substring(0, lastSlashIndex)
+          
           // 清理路径中的 ./ 和 ../ 以及多余的斜杠
           let cleanSrc = originalSrc
+            .replace(/\\/g, '/')   // 统一使用正斜杠
             .replace(/^\.\//, '')  // 移除开头的 ./
             .replace(/\/+/g, '/')  // 合并多个斜杠
           
           // 处理 ../ 路径
-          const currentDirParts = currentDir.split('/')
-          const srcParts = cleanSrc.split('/')
+          const currentDirParts = currentDir.split('/').filter(part => part !== '')
+          const srcParts = cleanSrc.split('/').filter(part => part !== '')
           
           let finalDirParts = [...currentDirParts]
           for (const part of srcParts) {
             if (part === '..') {
-              finalDirParts.pop()
+              if (finalDirParts.length > 0) {
+                finalDirParts.pop()
+              }
             } else if (part !== '.' && part !== '') {
               finalDirParts.push(part)
             }
           }
           
-          fullPath = finalDirParts.join('/').replace(/\\/g, '/')
+          fullPath = finalDirParts.join('/')
+          // 确保在Windows上使用正确的路径格式
+          if (window.__TAURI__) {
+            fullPath = fullPath.replace(/\//g, '\\')
+          }
         }
         
         // 使用Tauri的convertFileSrc转换为可访问的URL
@@ -238,7 +249,7 @@ const initEditor = () => {
       hljs: {
         style: isDark ? 'github-dark' : 'github',
         enable: true,
-        lineNumber: true
+        lineNumber: false  // 禁用行号避免重复渲染
       },
       math: {
         inlineDigit: true
@@ -362,6 +373,42 @@ const initEditor = () => {
         /* 支持16进制颜色 */
         .vditor-ir span[style*="#"], .vditor-wysiwyg span[style*="#"] {
           color: inherit !important;
+        }
+        
+        /* 修复代码块重复渲染问题 */
+        .vditor-reset pre.vditor-reset {
+          position: relative;
+        }
+        
+        /* 确保代码块只显示一次 */
+        .vditor-reset pre code.hljs {
+          display: block;
+        }
+        
+        /* 隐藏重复的代码块 */
+        .vditor-reset pre code + code {
+          display: none;
+        }
+        
+        /* 修复行号样式 */
+        .vditor-reset .hljs-ln {
+          border-collapse: collapse;
+        }
+        
+        .vditor-reset .hljs-ln td {
+          padding: 0;
+        }
+        
+        .vditor-reset .hljs-ln-n {
+          text-align: right;
+          color: #999;
+          vertical-align: top;
+          padding-right: 8px;
+          user-select: none;
+        }
+        
+        .vditor-reset .hljs-ln-code {
+          padding-left: 8px;
         }
       `
       document.head.appendChild(styleElement)

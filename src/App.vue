@@ -42,11 +42,20 @@ const isModified = computed(() => activeTab.value?.modified || false)
 
 // 监听快捷键
 let unlistenKeydown = null
+let unlistenFileOpen = null
 
 onMounted(async () => {
   // 监听全局快捷键
   unlistenKeydown = await listen('tauri://menu', (event) => {
     handleMenuAction(event.payload)
+  })
+
+  // 监听文件打开事件（从命令行参数或双击文件）
+  unlistenFileOpen = await listen('file-open', (event) => {
+    const filePath = event.payload.path
+    if (filePath) {
+      handleFileSelect(filePath)
+    }
   })
 
   // 监听键盘事件
@@ -65,6 +74,9 @@ onMounted(async () => {
 onUnmounted(() => {
   if (unlistenKeydown) {
     unlistenKeydown()
+  }
+  if (unlistenFileOpen) {
+    unlistenFileOpen()
   }
   document.removeEventListener('keydown', handleKeydown)
   window.removeEventListener('beforeunload', handleBeforeUnload)
