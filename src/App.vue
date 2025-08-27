@@ -43,6 +43,8 @@ const isModified = computed(() => activeTab.value?.modified || false)
 // 监听快捷键
 let unlistenKeydown = null
 let unlistenFileOpen = null
+let unlistenStartupFileOpened = null
+let startupFileOpened = false
 
 onMounted(async () => {
   // 监听全局快捷键
@@ -58,6 +60,11 @@ onMounted(async () => {
     }
   })
 
+  // 监听启动时文件打开完成事件
+  unlistenStartupFileOpened = await listen('startup-file-opened', () => {
+    startupFileOpened = true
+  })
+
   // 监听键盘事件
   document.addEventListener('keydown', handleKeydown)
   
@@ -67,8 +74,13 @@ onMounted(async () => {
   // 加载设置
   loadSettings()
   
-  // 创建初始标签页
-  createNewTab('# 欢迎使用 Verse 编辑器\n\n开始编写你的 Markdown 文档...\n')
+  // 延迟创建初始标签页，等待可能的启动文件打开
+  setTimeout(() => {
+    // 如果没有通过启动参数打开文件，则创建默认标签页
+    if (!startupFileOpened && tabs.value.length === 0) {
+      createNewTab('# 欢迎使用 Verse 编辑器\n\n开始编写你的 Markdown 文档...\n')
+    }
+  }, 200)
 })
 
 onUnmounted(() => {
@@ -77,6 +89,9 @@ onUnmounted(() => {
   }
   if (unlistenFileOpen) {
     unlistenFileOpen()
+  }
+  if (unlistenStartupFileOpened) {
+    unlistenStartupFileOpened()
   }
   document.removeEventListener('keydown', handleKeydown)
   window.removeEventListener('beforeunload', handleBeforeUnload)

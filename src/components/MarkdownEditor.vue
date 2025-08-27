@@ -249,7 +249,8 @@ const initEditor = () => {
       hljs: {
         style: isDark ? 'github-dark' : 'github',
         enable: true,
-        lineNumber: false  // 禁用行号避免重复渲染
+        lineNumber: false,
+        langs: ['javascript', 'typescript', 'python', 'java', 'cpp', 'c', 'css', 'html', 'xml', 'json', 'yaml', 'markdown', 'bash', 'shell', 'sql', 'php', 'go', 'rust', 'vue', 'jsx']
       },
       math: {
         inlineDigit: true
@@ -376,49 +377,113 @@ const initEditor = () => {
         }
         
         /* 修复代码块重复渲染问题 */
-        .vditor-reset pre.vditor-reset {
+        .vditor-reset pre {
           position: relative;
+          background: #f6f8fa;
+          border-radius: 6px;
+          padding: 16px;
+          overflow-x: auto;
         }
         
-        /* 确保代码块只显示一次 */
-        .vditor-reset pre code.hljs {
-          display: block;
+        /* 确保代码块内容正常显示 */
+        .vditor-reset pre code {
+          display: block !important;
+          background: transparent !important;
+          padding: 0 !important;
+          border: none !important;
+          border-radius: 0 !important;
+          font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+          font-size: 85%;
+          line-height: 1.45;
         }
         
-        /* 隐藏重复的代码块 */
-        .vditor-reset pre code + code {
-          display: none;
+        /* 只隐藏明确重复的代码元素 */
+        .vditor-reset pre code.hljs + code.hljs {
+          display: none !important;
         }
         
-        /* 修复行号样式 */
-        .vditor-reset .hljs-ln {
-          border-collapse: collapse;
+        /* 修复深色主题下的代码块背景 */
+        .dark .vditor-reset pre {
+          background: #161b22;
         }
         
-        .vditor-reset .hljs-ln td {
-          padding: 0;
-        }
-        
-        .vditor-reset .hljs-ln-n {
-          text-align: right;
-          color: #999;
-          vertical-align: top;
-          padding-right: 8px;
-          user-select: none;
-        }
-        
-        .vditor-reset .hljs-ln-code {
-          padding-left: 8px;
+        /* 确保代码高亮颜色正常 */
+        .vditor-reset pre code .hljs-keyword,
+        .vditor-reset pre code .hljs-selector-tag,
+        .vditor-reset pre code .hljs-title,
+        .vditor-reset pre code .hljs-section,
+        .vditor-reset pre code .hljs-doctag,
+        .vditor-reset pre code .hljs-name,
+        .vditor-reset pre code .hljs-strong {
+          font-weight: bold;
         }
       `
       document.head.appendChild(styleElement)
       
       // 处理图片路径转换
       setupImagePathHandler()
+      
+      // 修复代码块重复渲染问题
+      const fixDuplicateCodeBlocks = () => {
+        const contentAreas = [
+          vditor.vditor.ir?.element,
+          vditor.vditor.wysiwyg?.element,
+          vditor.vditor.preview?.element
+        ].filter(Boolean)
+        
+        contentAreas.forEach((area) => {
+          if (area) {
+            const preElements = area.querySelectorAll('pre')
+            preElements.forEach((pre) => {
+              const codeElements = pre.querySelectorAll('code')
+              // 如果有多个相同类名的code元素，移除重复的
+              if (codeElements.length > 1) {
+                const seen = new Set()
+                for (let i = 0; i < codeElements.length; i++) {
+                  const code = codeElements[i]
+                  const content = code.textContent || code.innerText
+                  const className = code.className
+                  const key = `${className}-${content.substring(0, 100)}` // 使用前100个字符作为标识
+                  
+                  if (seen.has(key)) {
+                    // 这是重复的元素，移除它
+                    code.remove()
+                  } else {
+                    seen.add(key)
+                  }
+                }
+              }
+            })
+          }
+        })
+      }
+      
+      // 立即执行一次
+      fixDuplicateCodeBlocks()
+      
+      // 监听内容变化
+      const observer = new MutationObserver(() => {
+        setTimeout(fixDuplicateCodeBlocks, 100)
+      })
+      
+      const contentAreas = [
+        vditor.vditor.ir?.element,
+        vditor.vditor.wysiwyg?.element,
+        vditor.vditor.preview?.element
+      ].filter(Boolean)
+      
+      contentAreas.forEach((area) => {
+        if (area) {
+          observer.observe(area, {
+            childList: true,
+            subtree: true
+          })
+        }
+      })
     },
     input: (value) => {
       emit('update:content', value)
-      // 延迟处理图片，确保DOM已更新
+      // 延迟处理图片和代码块，确保DOM已更新
       setTimeout(() => {
         if (vditor) {
           const contentAreas = [
@@ -429,9 +494,31 @@ const initEditor = () => {
           
           contentAreas.forEach((area) => {
             if (area) {
+              // 处理图片
               const images = area.querySelectorAll('img')
               images.forEach(async (img) => {
                 await processImageSrc(img)
+              })
+              
+              // 修复重复的代码块
+              const preElements = area.querySelectorAll('pre')
+              preElements.forEach((pre) => {
+                const codeElements = pre.querySelectorAll('code')
+                if (codeElements.length > 1) {
+                  const seen = new Set()
+                  for (let i = 0; i < codeElements.length; i++) {
+                    const code = codeElements[i]
+                    const content = code.textContent || code.innerText
+                    const className = code.className
+                    const key = `${className}-${content.substring(0, 100)}`
+                    
+                    if (seen.has(key)) {
+                      code.remove()
+                    } else {
+                      seen.add(key)
+                    }
+                  }
+                }
               })
             }
           })
