@@ -38,6 +38,31 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         with:
           includeRelease: false
+          args: --verbose
+
+      - name: List build artifacts
+        shell: pwsh
+        run: |
+          Write-Host "Checking build artifacts..."
+          Get-ChildItem -Path "src-tauri/target/release/bundle" -Recurse
+          
+      - name: Package release files
+        shell: pwsh
+        run: |
+          $msiFile = Get-ChildItem -Path "src-tauri/target/release/bundle/msi" -Filter "*.msi" | Select-Object -First 1
+          $setupFile = Get-ChildItem -Path "src-tauri/target/release/bundle/nsis" -Filter "*-setup.exe" | Select-Object -First 1
+          
+          if ($msiFile) {
+            Copy-Item $msiFile.FullName -Destination "./verse-editor-windows.msi"
+          } else {
+            Write-Error "MSI file not found!"
+          }
+          
+          if ($setupFile) {
+            Copy-Item $setupFile.FullName -Destination "./verse-editor-windows-setup.exe"
+          } else {
+            Write-Error "Setup EXE not found!"
+          }
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -51,8 +76,12 @@ jobs:
             
             ✅ Windows 版本发布
             📝 Markdown 编辑器
+            
+            ### 下载说明
+            - `verse-editor-windows.msi`: Windows MSI 安装包
+            - `verse-editor-windows-setup.exe`: Windows EXE 安装包
           draft: false
           prerelease: false
           files: |
-            src-tauri/target/release/bundle/msi/*.msi
-            src-tauri/target/release/bundle/nsis/*-setup.exe
+            ./verse-editor-windows.msi
+            ./verse-editor-windows-setup.exe
