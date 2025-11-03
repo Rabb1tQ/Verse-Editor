@@ -7,6 +7,9 @@ on:
         required: true
         default: '0.1.0'
 
+permissions:
+  contents: write
+
 jobs:
   release:
     runs-on: windows-latest
@@ -32,11 +35,24 @@ jobs:
       - name: Build the app
         uses: tauri-apps/tauri-action@v0
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
         with:
-          tagName: v${{ github.event.inputs.version }}
-          releaseName: 'Verse Editor v${{ github.event.inputs.version }}'
-          releaseBody: |
-            See the assets to download this version and install.
-          releaseDraft: true
+          includeRelease: false
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          tag_name: v${{ github.event.inputs.version }}
+          name: Verse Editor v${{ github.event.inputs.version }}
+          body: |
+            🚀 **Verse Editor Release v${{ github.event.inputs.version }}**
+            
+            ✅ Windows 版本发布
+            📝 Markdown 编辑器
+          draft: false
           prerelease: false
+          files: |
+            src-tauri/target/release/bundle/msi/*.msi
+            src-tauri/target/release/bundle/nsis/*-setup.exe
