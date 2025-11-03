@@ -29,16 +29,8 @@ jobs:
       - name: Install frontend dependencies
         run: npm install
 
-      - name: Build frontend
-        run: npm run build
-
-      - name: Build the app
-        uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        with:
-          includeRelease: false
-          args: --verbose
+      - name: Build App (Frontend + Tauri)
+        run: npm run tauri:build -- --verbose
 
       - name: List build artifacts
         shell: pwsh
