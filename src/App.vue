@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { open, save } from '@tauri-apps/plugin-dialog'
 import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs'
 import { listen } from '@tauri-apps/api/event'
+import { invoke } from '@tauri-apps/api/core'
 import MarkdownEditor from './components/MarkdownEditor.vue'
 import MenuBar from './components/MenuBar.vue'
 import LeftSidebar from './components/LeftSidebar.vue'
@@ -43,8 +44,6 @@ const isModified = computed(() => activeTab.value?.modified || false)
 // 监听快捷键
 let unlistenKeydown = null
 let unlistenFileOpen = null
-let unlistenStartupFileOpened = null
-let startupFileOpened = false
 
 onMounted(async () => {
   // 监听全局快捷键
@@ -56,13 +55,9 @@ onMounted(async () => {
   unlistenFileOpen = await listen('file-open', (event) => {
     const filePath = event.payload.path
     if (filePath) {
+      console.log('收到文件打开事件:', filePath)
       handleFileSelect(filePath)
     }
-  })
-
-  // 监听启动时文件打开完成事件
-  unlistenStartupFileOpened = await listen('startup-file-opened', () => {
-    startupFileOpened = true
   })
 
   // 监听键盘事件
@@ -74,13 +69,23 @@ onMounted(async () => {
   // 加载设置
   loadSettings()
   
-  // 延迟创建初始标签页，等待可能的启动文件打开
-  setTimeout(() => {
-    // 如果没有通过启动参数打开文件，则创建默认标签页
-    if (!startupFileOpened && tabs.value.length === 0) {
+  // 等待 Vue 完全准备好
+  await nextTick()
+  
+  // 通知后端前端已准备好，可以发送启动文件事件
+  try {
+    const hasStartupFile = await invoke('frontend_ready')
+    console.log('已通知后端前端准备就绪，是否有启动文件:', hasStartupFile)
+    
+    // 如果没有启动文件，创建欢迎页
+    if (!hasStartupFile) {
       createNewTab('# 欢迎使用 Verse 编辑器\n\n开始编写你的 Markdown 文档...\n')
     }
-  }, 200)
+  } catch (error) {
+    console.error('通知后端失败:', error)
+    // 如果通知失败，直接创建欢迎页
+    createNewTab('# 欢迎使用 Verse 编辑器\n\n开始编写你的 Markdown 文档...\n')
+  }
 })
 
 onUnmounted(() => {
@@ -89,9 +94,6 @@ onUnmounted(() => {
   }
   if (unlistenFileOpen) {
     unlistenFileOpen()
-  }
-  if (unlistenStartupFileOpened) {
-    unlistenStartupFileOpened()
   }
   document.removeEventListener('keydown', handleKeydown)
   window.removeEventListener('beforeunload', handleBeforeUnload)
