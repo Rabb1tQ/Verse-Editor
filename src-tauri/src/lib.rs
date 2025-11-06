@@ -1,11 +1,48 @@
 use std::env;
-use tauri::{Manager, Emitter};
+use std::process::Command;
+use tauri::{Emitter};
 use serde::{Deserialize, Serialize};
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
+}
+
+// 打开文件所在位置并选中文件
+#[tauri::command]
+fn open_file_location(path: String) -> Result<(), String> {
+    #[cfg(target_os = "windows")]
+    {
+        // Windows: 使用 explorer /select 命令
+        Command::new("explorer")
+            .args(["/select,", &path])
+            .spawn()
+            .map_err(|e| e.to_string())?;
+    }
+    
+    #[cfg(target_os = "macos")]
+    {
+        // macOS: 使用 open -R 命令
+        Command::new("open")
+            .args(["-R", &path])
+            .spawn()
+            .map_err(|e| e.to_string())?;
+    }
+    
+    #[cfg(target_os = "linux")]
+    {
+        // Linux: 打开文件所在目录（大多数文件管理器不支持选中功能）
+        let parent = std::path::Path::new(&path)
+            .parent()
+            .ok_or("无法获取父目录")?;
+        Command::new("xdg-open")
+            .arg(parent)
+            .spawn()
+            .map_err(|e| e.to_string())?;
+    }
+    
+    Ok(())
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -19,7 +56,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
-        .invoke_handler(tauri::generate_handler![greet])
+        .invoke_handler(tauri::generate_handler![greet, open_file_location])
         .setup(|app| {
             // 获取命令行参数
             let args: Vec<String> = env::args().collect();

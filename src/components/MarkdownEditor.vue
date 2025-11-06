@@ -243,8 +243,7 @@ const initEditor = () => {
     sanitize: false,
     preview: {
       theme: {
-        current: isDark ? 'dark' : 'light',
-        path: 'https://unpkg.com/vditor/dist/css/content-theme'
+        current: isDark ? 'dark' : 'light'
       },
       hljs: {
         style: isDark ? 'github-dark' : 'github',
@@ -307,13 +306,10 @@ const initEditor = () => {
     outline: {
       enable: false  // 禁用内置大纲
     },
-    options: {
-      mode: 'ir',
-      debugger: false,
-      typewriterMode: false,
-      cdn: 'https://unpkg.com/vditor',
-      lang: 'zh_CN'
-    },
+    lang: 'zh_CN',
+    debugger: false,
+    typewriterMode: false,
+    cdn: '/vditor',  // 使用本地资源，支持离线环境
     // 配置HTML标签白名单
     hint: {
       parse: false,

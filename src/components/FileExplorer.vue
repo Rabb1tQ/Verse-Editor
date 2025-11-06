@@ -90,6 +90,7 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { open, save, confirm } from '@tauri-apps/plugin-dialog'
 import { readDir, writeTextFile, mkdir, rename, remove } from '@tauri-apps/plugin-fs'
 import { openPath } from '@tauri-apps/plugin-opener'
+import { invoke } from '@tauri-apps/api/core'
 import FileTreeNode from './FileTreeNode.vue'
 
 const props = defineProps({
@@ -348,21 +349,10 @@ const handleOpenLocation = async (node) => {
       // 如果是文件夹，直接打开该文件夹
       await openPath(node.path)
     } else {
-      // 如果是文件，打开文件所在目录并尝试选中文件
-      const parentDir = node.path.substring(0, node.path.lastIndexOf('/'))
-      
-      // 在Windows上，可以使用explorer命令选中文件
-      // 在其他系统上，只能打开目录
-      const isWindows = navigator.platform.toLowerCase().includes('win')
-      
-      if (isWindows) {
-        // Windows: 使用explorer /select 命令选中文件
-        const windowsPath = node.path.replace(/\//g, '\\')
-        await openPath(`explorer /select,"${windowsPath}"`)
-      } else {
-        // 其他系统：只打开目录
-        await openPath(parentDir)
-      }
+      // 如果是文件，使用自定义命令打开文件所在目录并选中文件
+      // 将路径转换为系统原生格式（Windows需要反斜杠）
+      const nativePath = node.path.replace(/\//g, '\\')
+      await invoke('open_file_location', { path: nativePath })
     }
   } catch (error) {
     console.error('打开文件位置失败:', error)
