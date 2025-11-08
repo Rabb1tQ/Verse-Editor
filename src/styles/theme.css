@@ -656,3 +656,70 @@ hr {
 .vditor ::-webkit-scrollbar-thumb:hover {
   background: var(--verse-text-tertiary);
 }
+
+/* 工具栏提示框（tooltip）强制显示在下方 */
+.vditor-toolbar .vditor-tooltipped::before,
+.vditor-toolbar .vditor-tooltipped::after {
+  top: auto !important;
+  bottom: auto !important;
+}
+
+/* 强制tooltip显示在下方 */
+.vditor-toolbar .vditor-tooltipped::after {
+  top: 100% !important;
+  bottom: auto !important;
+  margin-top: 8px !important;
+}
+
+.vditor-toolbar .vditor-tooltipped::before {
+  top: 100% !important;
+  bottom: auto !important;
+  margin-top: 2px !important;
+  border-bottom-color: transparent !important;
+  border-top-color: transparent !important;
+  border-left-color: transparent !important;
+  border-right-color: transparent !important;
+}
+
+/* 确保tooltip箭头指向上方（因为tooltip在下方） */
+.vditor-toolbar .vditor-tooltipped-s::before {
+  border-bottom-color: rgba(0, 0, 0, 0.8) !important;
+}
+
+.dark .vditor-toolbar .vditor-tooltipped-s::before {
+  border-bottom-color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* 调整所有方向的tooltip都显示在下方 */
+.vditor-toolbar .vditor-tooltipped-n::after,
+.vditor-toolbar .vditor-tooltipped-ne::after,
+.vditor-toolbar .vditor-tooltipped-nw::after,
+.vditor-toolbar .vditor-tooltipped-s::after,
+.vditor-toolbar .vditor-tooltipped-se::after,
+.vditor-toolbar .vditor-tooltipped-sw::after {
+  top: 100% !important;
+  bottom: auto !important;
+  margin-top: 8px !important;
+}
+
+.vditor-toolbar .vditor-tooltipped-n::before,
+.vditor-toolbar .vditor-tooltipped-ne::before,
+.vditor-toolbar .vditor-tooltipped-nw::before,
+.vditor-toolbar .vditor-tooltipped-s::before,
+.vditor-toolbar .vditor-tooltipped-se::before,
+.vditor-toolbar .vditor-tooltipped-sw::before {
+  top: 100% !important;
+  bottom: auto !important;
+  margin-top: 2px !important;
+  border-top-color: transparent !important;
+  border-bottom-color: rgba(0, 0, 0, 0.8) !important;
+}
+
+.dark .vditor-toolbar .vditor-tooltipped-n::before,
+.dark .vditor-toolbar .vditor-tooltipped-ne::before,
+.dark .vditor-toolbar .vditor-tooltipped-nw::before,
+.dark .vditor-toolbar .vditor-tooltipped-s::before,
+.dark .vditor-toolbar .vditor-tooltipped-se::before,
+.dark .vditor-toolbar .vditor-tooltipped-sw::before {
+  border-bottom-color: rgba(255, 255, 255, 0.9) !important;
+}

@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
-import { open, save } from '@tauri-apps/plugin-dialog'
+import { open, save, ask, message } from '@tauri-apps/plugin-dialog'
 import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs'
 import { listen } from '@tauri-apps/api/event'
 import { invoke } from '@tauri-apps/api/core'
@@ -39,11 +39,12 @@ const activeTab = computed(() => {
 
 const currentFile = computed(() => activeTab.value?.path || '')
 const content = computed(() => activeTab.value?.content || '')
-const isModified = computed(() => activeTab.value?.modified || false)
 
 // 监听快捷键
 let unlistenKeydown = null
 let unlistenFileOpen = null
+let unlistenFileChanged = null
+let unlistenWindowClose = null
 
 onMounted(async () => {
   // 监听全局快捷键
@@ -60,11 +61,47 @@ onMounted(async () => {
     }
   })
 
+  // 监听文件变化事件（图片文件被创建、修改或删除）
+  unlistenFileChanged = await listen('file-changed', (event) => {
+    const { path, event_type } = event.payload
+    console.log(`🔄 检测到图片文件变化: ${event_type} - ${path}`)
+    
+    // 刷新编辑器中的图片显示
+    if (editorRef.value) {
+      console.log('📸 正在刷新编辑器中的所有图片...')
+      editorRef.value.refreshImages()
+    } else {
+      console.warn('⚠️ 编辑器引用不存在，无法刷新图片')
+    }
+  })
+
   // 监听键盘事件
   document.addEventListener('keydown', handleKeydown)
   
-  // 监听窗口关闭事件
-  window.addEventListener('beforeunload', handleBeforeUnload)
+  // 监听窗口关闭事件（使用 Tauri API）
+  const { getCurrentWindow } = await import('@tauri-apps/api/window')
+  const appWindow = getCurrentWindow()
+  
+  unlistenWindowClose = await appWindow.onCloseRequested(async (event) => {
+    // 检查是否有未保存的更改
+    const unsavedTabs = tabs.value.filter(tab => tab.modified || tab.deleted)
+    
+    if (unsavedTabs.length > 0) {
+      const names = unsavedTabs.map(tab => tab.title).join('、')
+      const shouldClose = await ask(
+        `以下文档有未保存的更改：${names}\n\n确定要关闭程序吗？`,
+        {
+          title: '确认退出',
+          kind: 'warning'
+        }
+      )
+      
+      if (!shouldClose) {
+        // 阻止窗口关闭
+        event.preventDefault()
+      }
+    }
+  })
   
   // 加载设置
   loadSettings()
@@ -79,12 +116,12 @@ onMounted(async () => {
     
     // 如果没有启动文件，创建欢迎页
     if (!hasStartupFile) {
-      createNewTab('# 欢迎使用 Verse 编辑器\n\n开始编写你的 Markdown 文档...\n')
+      createNewTab('')
     }
   } catch (error) {
     console.error('通知后端失败:', error)
     // 如果通知失败，直接创建欢迎页
-    createNewTab('# 欢迎使用 Verse 编辑器\n\n开始编写你的 Markdown 文档...\n')
+    createNewTab('')
   }
 })
 
@@ -95,8 +132,13 @@ onUnmounted(() => {
   if (unlistenFileOpen) {
     unlistenFileOpen()
   }
+  if (unlistenFileChanged) {
+    unlistenFileChanged()
+  }
+  if (unlistenWindowClose) {
+    unlistenWindowClose()
+  }
   document.removeEventListener('keydown', handleKeydown)
-  window.removeEventListener('beforeunload', handleBeforeUnload)
 })
 
 // 标签页管理方法
@@ -117,7 +159,7 @@ const createNewTab = (initialContent = '', filePath = '') => {
   return newTab
 }
 
-const closeTab = (tabId) => {
+const closeTab = async (tabId) => {
   const tabIndex = tabs.value.findIndex(tab => tab.id === tabId)
   if (tabIndex === -1) return
   
@@ -125,7 +167,14 @@ const closeTab = (tabId) => {
   
   // 检查是否有未保存的更改
   if (tab.modified) {
-    if (!confirm(`文档 "${tab.title}" 有未保存的更改，是否关闭？`)) {
+    // 使用 Tauri 的 ask 对话框（异步）
+    const shouldClose = await ask(`文档 "${tab.title}" 有未保存的更改，是否关闭？`, {
+      title: '确认关闭',
+      kind: 'warning'
+    })
+    
+    if (!shouldClose) {
+      // 用户选择取消，不关闭标签页
       return
     }
   }
@@ -186,6 +235,16 @@ const handleKeydown = (event) => {
           toggleSearchPanel()
         }
         break
+      case 'r':
+        if (event.shiftKey) {
+          // Ctrl+Shift+R 刷新图片
+          event.preventDefault()
+          if (editorRef.value) {
+            console.log('🔄 手动刷新图片...')
+            editorRef.value.refreshImages()
+          }
+        }
+        break
     }
   }
 }
@@ -239,11 +298,25 @@ const handleOpenFile = async () => {
         
         const fileContent = await readTextFile(filePath)
         createNewTab(fileContent, filePath)
+        
+        // 如果没有打开文件夹，自动监控文件所在的目录
+        if (!currentFolder.value && filePath) {
+          const fileDir = filePath.substring(0, Math.max(filePath.lastIndexOf('/'), filePath.lastIndexOf('\\')))
+          if (fileDir) {
+            try {
+              console.log('🔍 自动监控文件所在目录:', fileDir)
+              await invoke('watch_directory', { path: fileDir })
+              console.log('✅ 目录文件监控已启动 (自动)', fileDir)
+            } catch (error) {
+              console.error('❌ 自动启动目录监控失败:', error)
+            }
+          }
+        }
       }
     }
   } catch (error) {
     console.error('打开文件失败:', error)
-    alert('打开文件失败: ' + error.message)
+    await message('打开文件失败: ' + error.message, { title: '错误', kind: 'error' })
   }
 }
 
@@ -266,6 +339,20 @@ const handleFileSelect = async (filePath, lineNumber = null) => {
     
     // 添加到最近文件列表
     addToRecentFiles(filePath)
+    
+    // 如果没有打开文件夹，自动监控文件所在的目录
+    if (!currentFolder.value && filePath) {
+      const fileDir = filePath.substring(0, Math.max(filePath.lastIndexOf('/'), filePath.lastIndexOf('\\')))
+      if (fileDir) {
+        try {
+          console.log('🔍 自动监控文件所在目录:', fileDir)
+          await invoke('watch_directory', { path: fileDir })
+          console.log('✅ 目录文件监控已启动 (自动)', fileDir)
+        } catch (error) {
+          console.error('❌ 自动启动目录监控失败:', error)
+        }
+      }
+    }
     
     // TODO: 如果有行号，跳转到指定行
     if (lineNumber) {
@@ -294,7 +381,7 @@ const handleSaveFile = async () => {
     tab.content = currentContent
   } catch (error) {
     console.error('保存文件失败:', error)
-    alert('保存文件失败: ' + error.message)
+    await message('保存文件失败: ' + error.message, { title: '错误', kind: 'error' })
   }
 }
 
@@ -327,7 +414,7 @@ const handleSaveAs = async () => {
     }
   } catch (error) {
     console.error('保存文件失败:', error)
-    alert('保存文件失败: ' + error.message)
+    await message('保存文件失败: ' + error.message, { title: '错误', kind: 'error' })
   }
 }
 
@@ -355,14 +442,20 @@ const handleModeChange = (mode) => {
 }
 
 // 标签页事件处理
-const handleTabCloseOthers = (keepTabId) => {
+const handleTabCloseOthers = async (keepTabId) => {
   const tabsToClose = tabs.value.filter(tab => tab.id !== keepTabId)
+  const modifiedTabs = tabsToClose.filter(tab => tab.modified)
   
-  for (const tab of tabsToClose) {
-    if (tab.modified) {
-      if (!confirm(`文档 "${tab.title}" 有未保存的更改，是否关闭？`)) {
-        return
-      }
+  if (modifiedTabs.length > 0) {
+    const names = modifiedTabs.map(tab => tab.title).join('、')
+    // 使用 Tauri 的 ask 对话框
+    const shouldClose = await ask(`以下文档有未保存的更改：${names}，是否关闭这些标签页？`, {
+      title: '确认关闭',
+      kind: 'warning'
+    })
+    
+    if (!shouldClose) {
+      return
     }
   }
   
@@ -370,12 +463,18 @@ const handleTabCloseOthers = (keepTabId) => {
   activeTabId.value = keepTabId
 }
 
-const handleTabCloseAll = () => {
+const handleTabCloseAll = async () => {
   const modifiedTabs = tabs.value.filter(tab => tab.modified)
   
   if (modifiedTabs.length > 0) {
-    const names = modifiedTabs.map(tab => tab.title).join(', ')
-    if (!confirm(`以下文档有未保存的更改：${names}，是否关闭所有标签页？`)) {
+    const names = modifiedTabs.map(tab => tab.title).join('、')
+    // 使用 Tauri 的 ask 对话框
+    const shouldClose = await ask(`以下文档有未保存的更改：${names}，是否关闭所有标签页？`, {
+      title: '确认关闭',
+      kind: 'warning'
+    })
+    
+    if (!shouldClose) {
       return
     }
   }
@@ -394,8 +493,20 @@ const toggleRightSidebar = () => {
 }
 
 // 文件夹变化处理
-const handleFolderChange = (folderPath) => {
+const handleFolderChange = async (folderPath) => {
   currentFolder.value = folderPath
+  
+  // 如果打开了文件夹，启动文件监控
+  if (folderPath) {
+    try {
+      console.log('🔍 正在为目录启动文件监控:', folderPath)
+      await invoke('watch_directory', { path: folderPath })
+      console.log('✅ 目录文件监控已启动:', folderPath)
+      console.log('💡 提示: 现在如果文件夹中的图片文件发生变化（创建/修改/删除），编辑器会自动刷新')
+    } catch (error) {
+      console.error('❌ 启动目录监控失败:', error)
+    }
+  }
 }
 
 // 处理文件删除
@@ -437,18 +548,6 @@ const handleHeadingClick = (item) => {
   }
 }
 
-// 处理窗口关闭前的保存提示
-const handleBeforeUnload = (event) => {
-  // 检查是否有未保存或已删除的文件
-  const unsavedTabs = tabs.value.filter(tab => tab.modified || tab.deleted)
-  
-  if (unsavedTabs.length > 0) {
-    const message = '您有未保存的更改，确定要关闭吗？'
-    event.preventDefault()
-    event.returnValue = message
-    return message
-  }
-}
 
 // 检查是否有未保存的更改
 const hasUnsavedChanges = () => {
@@ -670,8 +769,6 @@ const handleSidebarWidthChange = (width) => {
   <div class="app">
     <!-- 菜单栏 -->
     <MenuBar
-      :current-file="currentFile"
-      :is-modified="isModified"
       :mode="editorMode"
       :current-theme="currentTheme"
       :recent-files="recentFiles"
@@ -734,8 +831,6 @@ const handleSidebarWidthChange = (width) => {
           <el-icon size="64" color="#dcdfe6">
             <Document />
           </el-icon>
-          <h3>欢迎使用 Verse 编辑器</h3>
-          <p>创建新文档或打开现有文件开始编辑</p>
           <div class="empty-actions">
             <el-button type="primary" @click="handleNewFile">新建文档</el-button>
             <el-button @click="handleOpenFile">打开文件</el-button>

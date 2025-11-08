@@ -119,15 +119,6 @@
         </div>
       </div>
     </div>
-
-    <!-- 右侧信息 -->
-    <div class="menu-info">
-      <span v-if="currentFile" class="file-status">
-        {{ getFileName(currentFile) }}
-        <span v-if="isModified" class="modified-indicator">•</span>
-      </span>
-      <span v-else class="file-status">未命名文档</span>
-    </div>
   </div>
 </template>
 
@@ -135,14 +126,6 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 
 const props = defineProps({
-  currentFile: {
-    type: String,
-    default: ''
-  },
-  isModified: {
-    type: Boolean,
-    default: false
-  },
   mode: {
     type: String,
     default: 'ir'
@@ -355,26 +338,6 @@ onUnmounted(() => {
   font-size: 11px;
   color: var(--verse-text-tertiary);
   font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
-}
-
-.menu-info {
-  display: flex;
-  align-items: center;
-  color: var(--verse-text-secondary);
-  font-size: 12px;
-}
-
-.file-status {
-  display: flex;
-  align-items: center;
-  font-weight: 500;
-}
-
-.modified-indicator {
-  color: var(--verse-warning);
-  font-weight: bold;
-  margin-left: var(--verse-spacing-xs);
-  animation: pulse 2s infinite;
 }
 
 @keyframes pulse {

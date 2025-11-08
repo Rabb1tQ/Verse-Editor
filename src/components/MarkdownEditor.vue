@@ -157,16 +157,23 @@ const setupImagePathHandler = () => {
 
 // 处理单个图片的src属性
 const processImageSrc = async (img) => {
-  if (!img.src || img.dataset.processed) return
+  if (!img.src) return
   
   const originalSrc = img.getAttribute('src') || img.src
   
+  // 检查是否已经是转换后的 asset URL，如果是则跳过
+  if (originalSrc.startsWith('http://asset.localhost/') || 
+      originalSrc.startsWith('https://asset.localhost/') ||
+      originalSrc.startsWith('asset://')) {
+    return
+  }
+  
   try {
+    // 只处理需要转换的本地路径
     if (!originalSrc.startsWith('http') && 
         !originalSrc.startsWith('data:') && 
         !originalSrc.startsWith('tauri://') &&
-        !originalSrc.startsWith('blob:') &&
-        !originalSrc.startsWith('asset://')) {
+        !originalSrc.startsWith('blob:')) {
       
       if (props.currentFilePath) {
         let fullPath
@@ -212,7 +219,28 @@ const processImageSrc = async (img) => {
         try {
           const convertedSrc = convertFileSrc(fullPath)
           img.src = convertedSrc
-          img.dataset.processed = 'true'
+          // 存储原始路径和完整路径，用于后续检查文件是否存在
+          img.dataset.originalPath = originalSrc
+          img.dataset.fullPath = fullPath
+          
+          // 添加图片加载错误处理
+          img.onerror = () => {
+            console.warn('图片加载失败:', fullPath)
+            // 为失败的图片添加一个样式类
+            img.classList.add('image-load-error')
+            img.title = `图片加载失败: ${originalSrc}`
+            // 设置一个占位符，让用户知道图片已损坏
+            img.alt = `❌ 图片不存在: ${originalSrc}`
+          }
+          
+          // 图片成功加载时移除错误样式
+          img.onload = () => {
+            img.classList.remove('image-load-error')
+            // 恢复原始 alt 文本
+            if (img.alt && img.alt.startsWith('❌')) {
+              img.alt = originalSrc
+            }
+          }
           
           console.log('图片路径转换:', originalSrc, '->', fullPath, '->', convertedSrc)
         } catch (fileError) {
@@ -567,6 +595,67 @@ const scrollToLine = (line) => {
   }
 }
 
+// 刷新所有图片
+const refreshImages = () => {
+  if (!vditor) return
+  
+  console.log('🔄 开始刷新所有图片...')
+  
+  const contentAreas = [
+    vditor.vditor.ir?.element,
+    vditor.vditor.wysiwyg?.element,
+    vditor.vditor.preview?.element
+  ].filter(Boolean)
+  
+  let imageCount = 0
+  
+  contentAreas.forEach((area) => {
+    if (area) {
+      const images = area.querySelectorAll('img')
+      images.forEach((img) => {
+        // 强制重新加载图片，添加时间戳破坏缓存
+        const currentSrc = img.src
+        if (currentSrc && !currentSrc.startsWith('data:')) {
+          imageCount++
+          
+          // 获取原始路径
+          const originalPath = img.dataset.originalPath || ''
+          const fullPath = img.dataset.fullPath || ''
+          
+          // 移除旧的时间戳参数（如果有）
+          const baseUrl = currentSrc.split('?')[0]
+          // 添加新的时间戳参数强制刷新
+          const timestamp = new Date().getTime()
+          const newSrc = `${baseUrl}?t=${timestamp}`
+          
+          console.log(`  📷 [${imageCount}] 刷新图片:`, originalPath || baseUrl)
+          
+          // 重新绑定错误和加载处理器
+          img.onerror = () => {
+            console.warn(`  ❌ 图片加载失败:`, fullPath || originalPath)
+            img.classList.add('image-load-error')
+            img.title = `图片加载失败: ${originalPath}`
+            img.alt = `❌ 图片不存在: ${originalPath}`
+          }
+          
+          img.onload = () => {
+            console.log(`  ✅ 图片加载成功:`, originalPath || baseUrl)
+            img.classList.remove('image-load-error')
+            if (img.alt && img.alt.startsWith('❌')) {
+              img.alt = originalPath
+            }
+          }
+          
+          // 设置新的 src 触发重新加载
+          img.src = newSrc
+        }
+      })
+    }
+  })
+  
+  console.log(`✅ 已触发 ${imageCount} 张图片刷新`)
+}
+
 // 暴露方法给父组件
 defineExpose({
   getValue: () => vditor?.getValue() || '',
@@ -576,7 +665,8 @@ defineExpose({
   disabled: () => vditor?.disabled(),
   enable: () => vditor?.enable(),
   getHTML: () => vditor?.getHTML() || '',
-  scrollToLine
+  scrollToLine,
+  refreshImages
 })
 </script>
 
@@ -626,5 +716,39 @@ defineExpose({
 .vditor-editor :deep(.vditor-ir) font[color="purple"],
 .vditor-editor :deep(.vditor-wysiwyg) font[color="purple"] {
   color: purple !important;
+}
+
+/* 图片加载失败的样式 */
+.vditor-editor :deep(img.image-load-error) {
+  border: 2px dashed #f56c6c !important;
+  background: #fef0f0 !important;
+  padding: 8px !important;
+  opacity: 1 !important;
+  min-width: 200px;
+  min-height: 100px;
+  display: inline-block !important;
+  position: relative;
+  font-size: 14px;
+  color: #f56c6c;
+}
+
+.vditor-editor :deep(.vditor-ir img.image-load-error),
+.vditor-editor :deep(.vditor-wysiwyg img.image-load-error) {
+  border: 2px dashed #f56c6c !important;
+  background: #fef0f0 !important;
+  padding: 4px !important;
+  opacity: 1 !important;
+  min-width: 200px;
+  min-height: 100px;
+  display: inline-block !important;
+}
+
+/* 深色模式下的错误样式 */
+.dark .vditor-editor :deep(img.image-load-error),
+.dark .vditor-editor :deep(.vditor-ir img.image-load-error),
+.dark .vditor-editor :deep(.vditor-wysiwyg img.image-load-error) {
+  background: #442222 !important;
+  border-color: #f56c6c !important;
+  color: #f56c6c;
 }
 </style>

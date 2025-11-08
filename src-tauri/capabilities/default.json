@@ -67,6 +67,10 @@
     "dialog:allow-message",
     "dialog:allow-ask",
     "dialog:allow-confirm",
+    "core:window:allow-close",
+    "core:window:allow-destroy",
+    "core:event:allow-listen",
+    "core:event:allow-unlisten",
     {
       "identifier": "opener:allow-open-path",
       "allow": [
